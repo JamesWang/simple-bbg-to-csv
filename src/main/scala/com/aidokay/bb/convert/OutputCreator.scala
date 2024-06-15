@@ -6,5 +6,5 @@ trait OutputCreator[I] {
 
 object OutputCreator {
   extension (result: OutputResult)
-    def asCsv(): String = result.toCsv()
+    def asCsv(): String = result.toCsv
 }
