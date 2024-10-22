@@ -7,23 +7,25 @@ import java.io.IOException
 import scala.io.Source
 
 
-class FileDataLoader extends DataLoader[ZIO[Any, IOException, List[String]]] {
+trait FileDataLoader extends DataLoader[ZIO[Any, IOException, List[String]]] {
+
+  private case class RowsOfData(data: List[String])
 
   override def load(from: String): ZIO[Any, IOException, List[String]] = {
     val fileReader = ZIO.fromAutoCloseable(ZIO.attemptBlockingIO(Source.fromFile(from)))
     val extractLinesAlgo =
       for {
-        data <- ZIO.service[List[String]]
+        rows  <- ZIO.service[RowsOfData]
         lines <- {
-          val start = data.indexOf(START_OF_DATA)
-          val end = data.indexOf(END_OF_DATA)
-          ZIO.succeed(data.slice(start + 1, end).map(line => line.split("\\|")(Constants.INTEREST_INDEX)))
+          val start = rows.data.indexOf(START_OF_DATA)
+          val end   = rows.data.indexOf(END_OF_DATA)
+          ZIO.succeed(rows.data.slice(start + 1, end).map(line => line.split("\\|")(Constants.INTEREST_INDEX)))
         }
       } yield lines
-    extractLinesAlgo.provideLayer(ZLayer.scoped(fileReader.map(_.getLines().toList)))
+    extractLinesAlgo.provideLayer(ZLayer.scoped(fileReader.map(_.getLines().toList).map(RowsOfData.apply)))
   }
 }
 
 object FileDataLoader {
-  val live: ULayer[FileDataLoader] = ZLayer.succeed[FileDataLoader](new FileDataLoader)
+  val live: ULayer[FileDataLoader] = ZLayer.succeed[FileDataLoader](new FileDataLoader{})
 }

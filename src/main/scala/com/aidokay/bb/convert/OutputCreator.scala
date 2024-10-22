@@ -1,7 +1,7 @@
 package com.aidokay.bb.convert
 
-trait OutputCreator[I] {
-  def create(result: List[I], file: String): Unit
+trait OutputCreator[I, O] {
+  def create(result: List[I], file: String): O
 }
 
 object OutputCreator {
